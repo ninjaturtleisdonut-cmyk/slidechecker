@@ -3,19 +3,28 @@ import requests, os
 
 app = Flask(__name__)
 
-GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY")
+HF_API_KEY = os.environ.get("HF_API_KEY")
 
-def send_to_gemini(prompt):
-    url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
-    params = {"key": GEMINI_API_KEY}
-    headers = {"Content-Type": "application/json"}
+def send_to_huggingface(prompt):
+    url = "https://api-inference.huggingface.co/models/mistralai/Mistral-7B-Instruct-v0.2"
+    headers = {
+        "Authorization": f"Bearer {HF_API_KEY}",
+        "Content-Type": "application/json"
+    }
     payload = {
-        "contents": [{"parts":[{"text":prompt}]}]
+        "inputs": prompt,
+        "parameters": {
+            "max_new_tokens": 400,
+            "temperature": 0.2,
+            "return_full_text": False
+        }
     }
 
-    r = requests.post(url, headers=headers, params=params, json=payload)
-    r.raise_for_status()
-    return r.json()["candidates"][0]["content"]["parts"][0]["text"]
+    response = requests.post(url, headers=headers, json=payload, timeout=60)
+    response.raise_for_status()
+    data = response.json()
+
+    return data[0]["generated_text"]
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
@@ -35,7 +44,7 @@ Slide text:
 {text}
 """
     try:
-        result = send_to_gemini(prompt)
+        result = send_to_huggingface(prompt)
         return jsonify({"report": result})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
