@@ -47,6 +47,8 @@
             color: #555;
             margin-bottom: 20px;
             font-size: 18px;
+            text-align:center;
+            padding:20px;
         }
         .btn {
             display: inline-block;
@@ -62,7 +64,14 @@
         .btn:hover {
             background: #005fcc;
         }
-        /* Archive styling */
+        .analysis-box {
+            margin-top: 25px;
+            background: #f0f4ff;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+            white-space: pre-wrap;
+        }
         .archive-item {
             background: #fafafa;
             border: 1px solid #ddd;
@@ -70,14 +79,18 @@
             border-radius: 8px;
             margin-bottom: 20px;
         }
-        .archive-item h3 {
-            margin-top: 0;
-        }
-        img.archive-image {
+        img {
             max-width: 100%;
-            border: 1px solid #ccc;
             border-radius: 6px;
             margin-top: 10px;
+        }
+        textarea {
+            width: 100%;
+            height: 140px;
+            padding: 10px;
+            margin-bottom: 15px;
+            border-radius: 6px;
+            border: 1px solid #ccc;
         }
     </style>
 </head>
@@ -94,14 +107,19 @@
 <!-- HOME SECTION -->
 <section id="home">
     <div class="container">
-        <h2>Upload Your Slide (Demo)</h2>
+        <h2>Upload Your Slide (MVP)</h2>
 
         <div class="slide-box">
-            Slide Preview Area (not functional)
+            Slide Preview Area<br>
+            <small>(For MVP: paste slide text below)</small>
         </div>
 
-        <button class="btn">Upload Slide</button>
-        <p style="color:#666; margin-top:10px;">This is just a visual placeholder. Upload will work in the MVP.</p>
+        <!-- MVP INPUT -->
+        <textarea id="slideText" placeholder="Paste slide text here..."></textarea>
+
+        <button class="btn" onclick="analyzeSlide()">Analyze Slide</button>
+
+        <div id="analysis" class="analysis-box"></div>
     </div>
 </section>
 
@@ -111,26 +129,55 @@
         <h2>Archive</h2>
         <p>Your saved slide analyses (example layout)</p>
 
-        <!-- Archive Item 1 -->
         <div class="archive-item">
             <h3>1 — 2025-02-10 — Contact Angle Slide</h3>
             <img src="slidepreview.png">
         </div>
 
-        <!-- Archive Item 2 -->
         <div class="archive-item">
             <h3>2 — 2025-02-09 — Surface Tension Overview</h3>
             <p>(No preview available)</p>
         </div>
 
-        <!-- Archive Item 3 -->
         <div class="archive-item">
             <h3>3 — 2025-02-08 — Introduction Slide</h3>
             <p>(No preview available)</p>
         </div>
-
     </div>
 </section>
+
+<script>
+async function analyzeSlide() {
+    const text = document.getElementById("slideText").value.trim();
+    const output = document.getElementById("analysis");
+
+    if (!text) {
+        alert("Please paste some slide text first.");
+        return;
+    }
+
+    output.style.display = "block";
+    output.textContent = "Analyzing slide…";
+
+    try {
+        const response = await fetch("YOUR_BACKEND_URL/analyze", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ text })
+        });
+
+        const data = await response.json();
+
+        if (data.error) {
+            output.textContent = "Error: " + data.error;
+        } else {
+            output.textContent = data.report;
+        }
+    } catch (err) {
+        output.textContent = "Network error: " + err.message;
+    }
+}
+</script>
 
 </body>
 </html>
