@@ -7,27 +7,39 @@ CORS(app)
 
 HF_API_KEY = os.environ.get("HF_API_KEY")
 
+MODELS = [
+    "google/flan-t5-base",
+    "facebook/bart-large-cnn",
+    "tiiuae/falcon-7b-instruct"
+]
+
 def send_to_huggingface(prompt):
-    url = "https://api-inference.huggingface.co/models/google/flan-t5-large"
+    HF_API_KEY = os.environ.get("HF_API_KEY")
     headers = {
         "Authorization": f"Bearer {HF_API_KEY}",
         "Content-Type": "application/json"
     }
-    payload = {
-        "inputs": prompt,
-        "parameters": {
-            "max_new_tokens": 400,
-            "temperature": 0.2,
-            "return_full_text": False
-        }
-    }
 
-    response = requests.post(url, headers=headers, json=payload, timeout=60)
-    response.raise_for_status()
-    output = response.json()
-    if isinstance(output, list):
-        return output[0].get("generated_text", "")
-    return str(output)
+    for model in MODELS:
+        try:
+            url = f"https://api-inference.huggingface.co/models/{model}"
+            response = requests.post(
+                url,
+                headers=headers,
+                json={"inputs": prompt},
+                timeout=60
+            )
+
+            if response.status_code == 200:
+                output = response.json()
+                if isinstance(output, list):
+                    return output[0].get("generated_text", "")
+                return str(output)
+
+        except Exception:
+            continue
+
+    return "AI temporarily unavailable. Please try again."
 
 @app.route("/analyze", methods=["POST"])
 def analyze():
