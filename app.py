@@ -49,4 +49,3 @@ Slide text:
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-app.run(host="0.0.0.0", port=8080)
